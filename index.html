@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo — Gestión de Cartones</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════ AUTH SCREEN ═══════════════ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="logo auth-logo">
+      <span class="logo-b">B</span><span class="logo-i">I</span><span class="logo-n">N</span><span class="logo-g">G</span><span class="logo-o">O</span>
+    </div>
+    <div id="auth-form" class="auth-form">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth="login">Iniciar Sesión</button>
+        <button class="auth-tab" data-auth="register">Registrarse</button>
+      </div>
+      <div id="login-form" class="auth-form-content">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="login-username" placeholder="Ingresa tu usuario" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="login-password" placeholder="Ingresa tu contraseña" />
+        </div>
+        <button class="btn-primary" id="btn-login">Iniciar Sesión</button>
+        <div id="login-error" class="form-error hidden"></div>
+      </div>
+      <div id="register-form" class="auth-form-content hidden">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="register-username" placeholder="Elige un usuario" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="register-password" placeholder="Elige una contraseña" />
+        </div>
+        <div class="form-group">
+          <label>Confirmar Contraseña</label>
+          <input type="password" id="register-confirm" placeholder="Confirma tu contraseña" />
+        </div>
+        <button class="btn-primary" id="btn-register">Registrarse</button>
+        <div id="register-error" class="form-error hidden"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header id="app-header" class="app-header hidden">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-b">B</span><span class="logo-i">I</span><span class="logo-n">N</span><span class="logo-g">G</span><span class="logo-o">O</span>
+    </div>
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="registro">
+        <i class="fas fa-address-card"></i>
+        <span class="tab-text">Cartones</span>
+      </button>
+      <button class="tab-btn" data-tab="figura">
+        <i class="fas fa-bullseye"></i>
+        <span class="tab-text">Figura</span>
+      </button>
+      <button class="tab-btn" data-tab="juego">
+        <i class="fas fa-dice"></i>
+        <span class="tab-text">Juego</span>
+      </button>
+    </nav>
+    <div class="user-section">
+      <div class="carton-count">
+        <i class="fas fa-layer-group"></i>
+        <span id="stat-cartones">0 cartones</span>
+      </div>
+      <div class="user-info">
+        <div class="user-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-details">
+          <span id="stat-user" class="username"></span>
+          <button class="logout-btn" id="btn-logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="logout-text">Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main id="app-main" class="app-main hidden">
+
+  <!-- ── TAB: REGISTRO ── -->
+  <section id="tab-registro" class="tab-panel active">
+    <div class="panel-layout">
+
+      <!-- Form panel -->
+      <aside class="form-panel">
+        <h2 class="panel-title">Nuevo Cartón</h2>
+        <div class="form-group">
+          <label>N° de Control</label>
+          <input type="text" id="inp-control" maxlength="10" placeholder="Ej: 001" />
+        </div>
+        <div class="form-group">
+          <label>Nombre del Jugador</label>
+          <input type="text" id="inp-nombre" maxlength="40" placeholder="Nombre completo" />
+        </div>
+
+        <p class="matrix-hint">Ingresa los 24 números en la cuadrícula. La casilla central mostrará el N° de Control.</p>
+
+        <!-- 5×5 input grid -->
+        <div class="input-grid-wrapper">
+          <div class="col-headers">
+            <span>B <small>1-15</small></span>
+            <span>I <small>16-30</small></span>
+            <span>N <small>31-45</small></span>
+            <span>G <small>46-60</small></span>
+            <span>O <small>61-75</small></span>
+          </div>
+          <div class="input-grid" id="input-grid">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" id="btn-guardar">Guardar Cartón</button>
+          <button class="btn-ghost" id="btn-limpiar">Limpiar</button>
+        </div>
+        <div id="form-error" class="form-error hidden"></div>
+
+        <!-- Edit mode indicator -->
+        <div id="edit-mode-bar" class="edit-mode-bar hidden">
+          <span>✏️ Editando cartón <strong id="edit-control-label"></strong></span>
+          <button class="btn-ghost small" id="btn-cancel-edit">Cancelar edición</button>
+        </div>
+      </aside>
+
+      <!-- Cards list -->
+      <div class="cards-area">
+        <div class="cards-area-header">
+          <h2 class="panel-title">Cartones Registrados <span id="cards-count" class="badge">0 / 20</span></h2>
+        </div>
+        <div class="cards-grid" id="cards-grid">
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon">🎴</div>
+            <p>Aún no hay cartones.<br />Ingresa el primero en el formulario.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── TAB: FIGURA ── -->
+  <section id="tab-figura" class="tab-panel">
+    <div class="figura-layout">
+      <div class="figura-form">
+        <h2 class="panel-title">Configurar Figura Ganadora</h2>
+        <p class="figura-hint">Haz clic en las celdas para marcar cuáles forman la figura. La casilla central siempre está incluida.</p>
+
+        <div class="figura-grid-wrapper">
+          <div class="col-headers">
+            <span>B</span><span>I</span><span>N</span><span>G</span><span>O</span>
+          </div>
+          <div class="figura-grid" id="figura-grid">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+
+        <div class="figura-count">
+          Celdas seleccionadas: <strong id="figura-count">0</strong> (mín. 4 sin contar el centro)
+        </div>
+
+        <div class="figura-presets">
+          <p class="preset-label">Figuras rápidas:</p>
+          <div class="preset-btns">
+            <button class="btn-preset" data-preset="linea-h">Línea H</button>
+            <button class="btn-preset" data-preset="linea-v">Línea V</button>
+            <button class="btn-preset" data-preset="cruz">Cruz</button>
+            <button class="btn-preset" data-preset="esquinas">Esquinas</button>
+            <button class="btn-preset" data-preset="marco">Marco</button>
+            <button class="btn-preset" data-preset="X">X</button>
+            <button class="btn-preset" data-preset="full">Cartón Lleno</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" id="btn-guardar-figura">Confirmar Figura</button>
+          <button class="btn-ghost" id="btn-limpiar-figura">Limpiar</button>
+        </div>
+        <div id="figura-error" class="form-error hidden"></div>
+        <div id="figura-ok" class="form-ok hidden">✅ Figura guardada correctamente.</div>
+      </div>
+
+      <div class="figura-preview">
+        <div class="preview-header">
+          <h3>Vista previa</h3>
+          <button class="btn-ghost small" id="btn-limpiar-preview">
+            <i class="fas fa-eraser"></i>
+            Limpiar
+          </button>
+        </div>
+        <div class="figura-preview-grid" id="figura-preview-grid"></div>
+        <p class="preview-note">Las celdas doradas forman la figura ganadora.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TAB: JUEGO ── -->
+  <section id="tab-juego" class="tab-panel">
+    <div class="juego-layout">
+
+      <!-- Control bar -->
+      <div class="juego-controls">
+        <div class="numero-input-group">
+          <label>Número cantado</label>
+          <div class="numero-row">
+            <input type="number" id="inp-numero" min="1" max="75" placeholder="1–75" />
+            <button class="btn-primary" id="btn-cantar">Cantar</button>
+          </div>
+        </div>
+
+        <div class="numeros-cantados-wrapper">
+          <p class="cantados-label">Números cantados (<span id="cantados-count">0</span>)</p>
+          <div class="numeros-cantados" id="numeros-cantados"></div>
+        </div>
+
+        <div class="juego-actions">
+          <button class="btn-reset" id="btn-reset">🔄 Nueva Ronda</button>
+        </div>
+
+        <div id="figura-activa-info" class="figura-activa-info"></div>
+      </div>
+
+      <!-- Game cards -->
+      <div class="game-cards-wrapper">
+        <div class="game-cards-grid" id="game-cards-grid">
+          <div class="empty-state" id="game-empty-state">
+            <div class="empty-icon">🎲</div>
+            <p>Registra cartones y configura la figura<br />para comenzar el juego.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════ BINGO MODAL ═══════════════ -->
+<div id="bingo-modal" class="bingo-modal hidden">
+  <div class="bingo-modal-inner">
+    <div class="bingo-fireworks">🎉</div>
+    <h1 class="bingo-title">¡BINGO!</h1>
+    <p class="bingo-control">Cartón N° <strong id="modal-control"></strong></p>
+    <p class="bingo-jugador" id="modal-jugador"></p>
+    <button class="btn-primary large" id="btn-close-modal">Ver cartón ganador</button>
+  </div>
+</div>
+<div id="modal-overlay" class="modal-overlay hidden"></div>
+
+<!-- Confirmación personalizada -->
+<div id="confirm-overlay" class="modal-overlay hidden"></div>
+<div id="confirm-modal" class="confirm-modal hidden">
+  <div class="confirm-inner">
+    <h3 id="confirm-title">Confirmar</h3>
+    <p id="confirm-message">¿Estás seguro?</p>
+    <div class="confirm-actions">
+      <button class="btn-ghost" id="confirm-cancel">Cancelar</button>
+      <button class="btn-primary" id="confirm-accept">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
