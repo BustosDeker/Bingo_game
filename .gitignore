@@ -3,3 +3,8 @@ node_modules/
 .DS_Store
 /dist
 npm-debug.log
+
+# SQLite files
+*.db
+*.db-shm
+*.db-wal

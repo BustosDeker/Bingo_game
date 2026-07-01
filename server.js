@@ -48,9 +48,27 @@ try {
   db.pragma('synchronous = NORMAL');
   db.pragma('temp_store = MEMORY');
   db.pragma('busy_timeout = 5000');
+  db.pragma('wal_autocheckpoint = 1000'); // Checkpoint after 1000 pages
 } catch (e) {
   console.warn('Could not set SQLite pragmas:', e.message);
 }
+
+// Graceful shutdown
+function gracefulShutdown() {
+  console.log('\nShutting down gracefully...');
+  try {
+    db.pragma('wal_checkpoint(TRUNCATE)');
+    db.close();
+    console.log('Database closed successfully.');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error during shutdown:', err);
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 // Create helpful indexes for faster lookups
 db.exec(`
@@ -92,6 +110,15 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Helper to checkpoint WAL after writes
+function checkpointWAL() {
+  try {
+    db.pragma('wal_checkpoint(PASSIVE)');
+  } catch (e) {
+    console.warn('Checkpoint failed:', e.message);
+  }
+}
+
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
@@ -103,6 +130,7 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const result = stmtInsertUser.run(username, hashedPassword);
+    checkpointWAL();
     const token = jwt.sign({ id: result.lastInsertRowid, username }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: result.lastInsertRowid, username } });
   } catch (error) {
@@ -151,6 +179,7 @@ app.post('/api/cartones', authenticateToken, (req, res) => {
 
   try {
     const result = stmtInsertCarton.run(req.user.id, control, nombre, JSON.stringify(matrix));
+    checkpointWAL();
     res.json({ id: result.lastInsertRowid, control, nombre, matrix });
   } catch (error) {
     if (error.code === 'SQLITE_CONSTRAINT') {
@@ -173,7 +202,7 @@ app.put('/api/cartones/:id', authenticateToken, (req, res) => {
   if (result.changes === 0) {
     return res.status(404).json({ error: 'Carton not found' });
   }
-
+  checkpointWAL();
   res.json({ id, control, nombre, matrix });
 });
 
@@ -184,7 +213,7 @@ app.delete('/api/cartones/:id', authenticateToken, (req, res) => {
   if (result.changes === 0) {
     return res.status(404).json({ error: 'Carton not found' });
   }
-
+  checkpointWAL();
   res.json({ message: 'Carton deleted successfully' });
 });
 
@@ -209,15 +238,16 @@ app.post('/api/figura', authenticateToken, (req, res) => {
 
   if (existing) {
     stmtUpdateFigura.run(JSON.stringify(selected_cells), req.user.id);
-    res.json({ selected_cells });
   } else {
     stmtInsertFigura.run(req.user.id, JSON.stringify(selected_cells));
-    res.json({ selected_cells });
   }
+  checkpointWAL();
+  res.json({ selected_cells });
 });
 
 app.delete('/api/figura', authenticateToken, (req, res) => {
   const result = stmtDeleteFigura.run(req.user.id);
+  checkpointWAL();
   res.json({ message: 'Figura deleted successfully' });
 });
 
